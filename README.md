@@ -6,8 +6,7 @@ this app that records phone calls, transcribes the audio to text, generates summ
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/Valerie.git
-   cd Valerie
+   gh repo clone elmas23/valeri-audio
    ```
 
 2. Install dependencies:
@@ -37,8 +36,7 @@ this app that records phone calls, transcribes the audio to text, generates summ
 
 ### Starting the Service
 ```bash
-npm run dev  # Development mode
-npm start    # Production mode
+npx ts-node src/app.ts
 ```
 
 ### Making Calls
