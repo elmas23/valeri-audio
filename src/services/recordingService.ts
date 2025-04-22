@@ -4,6 +4,7 @@ import logger from '../utils/logger';
 import { storeRecording, storeTranscriptionAndSummary } from './storageService';
 import recordingProcessorService from './recordingProcessorService';
 import twilio from 'twilio';
+import { generateSpeech } from './ttsService';
 
 export const processRecording = async (
   recordingSid: string,
@@ -70,19 +71,22 @@ export const processRecording = async (
         try {
           logger.info(`Initiating call to ${callerNumber} to read summary`);
           
-          const call = await twilioClient.calls.create({
-            twiml: `<Response>
-                      <Say voice="alice">Hello, here is a summary of your recent call. ${processingResult.summary}</Say>
-                      <Pause length="1"/>
-                      <Say voice="alice">Thank you for using our service. Goodbye.</Say>
-                    </Response>`,
+          // Generate human-like speech for the summary
+          const summaryText = `Hello, here is a summary of your recent call. ${processingResult.summary} Thank you for using our service. Goodbye.`;
+          const speechUrl = await generateSpeech(summaryText, recordingSid);
+          
+          // Call the user back with the speech audio
+          await twilioClient.calls.create({
+            to: callerNumber,
             from: env.twilio.phoneNumber,
-            to: callerNumber
+            twiml: `<Response>
+                      <Play>${speechUrl}</Play>
+                    </Response>`
           });
           
-          logger.info(`Initiated call to ${callerNumber}, Call SID: ${call.sid}`);
-        } catch (callError) {
-          logger.error('Error placing call:', callError instanceof Error ? callError.message : 'Unknown error');
+          logger.info(`Initiated call to ${callerNumber} with audio summary`);
+        } catch (speechError) {
+          logger.error('Error generating or playing speech:', speechError instanceof Error ? speechError.message : 'Unknown error');
         }
       }
     
